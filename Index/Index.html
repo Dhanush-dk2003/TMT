@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="../Assets/icon.png" type="image/x-icon"/>
+    <title>TMT Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 20px 0;
+            transition: transform 0.3s ease;
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 20px;
+            cursor: pointer;
+        }
+
+        .sidebar ul li:hover,
+        .sidebar ul li.active {
+            background-color: #34495e;
+        }
+
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .toggle-btn {
+            display: none;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .toggle-btn {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-250px);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+
+        .content {
+            flex-grow: 1;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content.shifted {
+            margin-left: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .header .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+        }
+
+        .header .logo img {
+            width: 40px;
+            margin-right: 10px;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .header .user-info span {
+            margin-right: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .avatar {
+    width: 30px;
+    height: 30px;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dropdown {
+    display: none;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    border-radius: 4px;
+}
+
+.dropdown.show {
+    display: block;
+}
+
+        .dropdown a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .dropdown a:hover {
+            color: red;
+        }
+
+        .main-content {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .main-content h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .main-content .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .main-content .stats .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            text-align: left;
+        }
+
+        .main-content .stats .stat-card span {
+            display: block;
+        }
+
+        .main-content .stats .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 10px;
+        }
+
+        .main-content .stats .stat-card .label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .chatbot-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .chatbot-container.open {
+            display: flex;
+        }
+
+        .chatbot-header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 10px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .chatbot-header .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .chatbot-body {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+
+        .chatbot-body .message {
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .chatbot-body .user-message {
+            background: #007bff;
+            color: #fff;
+            margin-left: auto;
+        }
+
+        .chatbot-body .bot-message {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .chatbot-footer {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            display: flex;
+        }
+
+        .chatbot-footer input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .chatbot-footer button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            margin-left: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar" id="sidebar">
+        <ul>
+            <li class="active"><a href="Index.html">Dashboard</a></li>
+            <li><a href="../Pages/Route.html">Route card</a></li>
+            <li><a href="../Pages/Create.html">Create Load</a></li>
+            <li><a href="../Pages/Loadin.html">Load IN</a></li>
+            <li><a href="../Pages/Dispatch.html">Dispatch</a></li>
+            <li><a href="../Pages/Invoice.html">Invoices</a></li>
+            <li><a href="../Pages/Vouchers.html">Vouchers</a></li>
+            <li><a href="../Pages/Stockreport.html">Stock report</a></li>
+            <li><a href="../Pages/Return.html">Return</a></li>
+            <li><a href="../Pages/Reports.html">Reports</a></li>
+            <li><a href="../Pages/GRN.html">GRN Update</a></li>
+            <li><a href="../Pages/Masters.html">Masters</a></li>
+        </ul>
+    </div>
+    <div class="content" id="content">
+        <div class="header">
+            <div class="logo">
+                <img src="../Assets/Logo.png" alt="TMT Logo" />
+                TMT
+            </div>
+            <div class="user-info">
+                <span>DEMO Transport | ammarun foundries</span>
+                <span>17-04-2025</span>
+                <button id="avatarBtn" class="avatar">
+                  <img src="../Assets/Profile-image.png" alt="User Avatar" />
+                </button>
+                <div id="dropdownMenu" class="dropdown">
+                  <a href="../Login.html">Logout</a>
+                </div>
+              </div>
+              
+        </div>
+
+        <div class="main-content">
+            <h1>Hi there, ammarun foundries! 👋</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="label">Total Vendors</span>
+                    <span class="value">4</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Total Receivables</span>
+                    <span class="value">$349,246</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="chatbot-btn" onclick="toggleChatbot()">💬</button>
+    <div class="chatbot-container" id="chatbotContainer">
+        <div class="chatbot-header">
+            <h3>TMT Assistant</h3>
+            <button class="close-btn" onclick="toggleChatbot()">✖</button>
+        </div>
+        <div class="chatbot-body" id="chatbotBody">
+            <div class="bot-message">Hello! I'm TMT Assistant. How can I help you today?</div>
+        </div>
+        <div class="chatbot-footer">
+            <input type="text" id="chatbotInput" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('closed');
+            document.getElementById('content').classList.toggle('shifted');
+        }
+
+        function toggleChatbot() {
+            document.getElementById('chatbotContainer').classList.toggle('open');
+        }
+
+        const predefinedResponses = {
+            "Hii": "Hii!...How can I help you?",
+            "Hello": "Hello! How can I assist you today?",
+    "What can I do from the dashboard?": "The dashboard gives you an overview of key metrics like total vendors and receivables. It’s the first screen you see after login.",
+    "How do I create a new load?": "Click on 'Create Load' from the side menu to enter load details and initiate a new shipment.",
+    "What is a Route Card?": "The Route Card helps you manage and track planned transportation routes for your loads.",
+    "How can I add stock to inventory?": "Use the 'Load IN' section to add incoming stock into your inventory system.",
+    "How can I dispatch materials?": "Go to the 'Dispatch' section to process outgoing shipments and record dispatches.",
+    "Where can I view my invoices?": "You can view and manage all your invoices by selecting the 'Invoices' tab on the side menu.",
+    "How do I handle vouchers?": "Use the 'Vouchers' section to create and view transaction vouchers related to loads and dispatches.",
+    "How do I see current stock levels?": "Go to the 'Stock Report' to check available stock by product, date, or location.",
+    "What is the purpose of the Return section?": "The 'Return' section allows you to process and track returned items or shipments.",
+    "How can I generate reports?": "Select 'Reports' to generate and download summaries of loads, dispatches, vendors, and more.",
+    "What is GRN Update?": "GRN Update (Goods Receipt Note) is where you update records for items received into your warehouse.",
+    "What is under the Masters section?": "The 'Masters' section contains reference data like vendors, products, and transporters used throughout the system.",
+    "Can I update vendor details?": "Yes, you can update vendor information in the 'Masters' section under Vendor Management.",
+    "How many vendors do I have?": "You currently have 4 vendors as shown on the dashboard.",
+    "What is my total receivables?": "Your total receivables amount to $349,246 as displayed on the dashboard.",
+    "How do I logout?": "Click on the profile icon on the top right corner and select 'Logout'.",
+    "Can I filter data by date?": "Yes, most modules including reports and stock reports allow you to filter data by date range.",
+    "Is there a user guide for TMT?": "Yes, a help document or demo can be provided. Would you like me to schedule a walkthrough?",
+    "Can I export reports to Excel or PDF?": "Yes, you can export most reports in Excel or PDF format from the 'Reports' section.",
+    "Who can I contact for training?": "For training or walkthroughs, please reach out to your account manager or support team.",
+  "What is the tmt dashboard?": "TMT dashboard is a transport management system to handle dispatches, returns, invoices, and reports.",
+  "what is the tmt dashboard?": "TMT dashboard is a transport management system to handle dispatches, returns, invoices, and reports.",
+
+  "How do I create a load?": "Go to 'Create Load' in the sidebar and enter the load details like vendor, material, and vehicle.",
+  "how do i create a load?": "Go to 'Create Load' in the sidebar and enter the load details like vendor, material, and vehicle.",
+
+  "Where can I find the stock report?": "The stock report is available under the 'Stock report' section in the sidebar.",
+  "where can i find the stock report?": "The stock report is available under the 'Stock report' section in the sidebar.",
+
+  "How can I view dispatch records?": "Click on 'Dispatch' in the menu to view and manage dispatch records.",
+  "how can i view dispatch records?": "Click on 'Dispatch' in the menu to view and manage dispatch records.",
+
+  "What is grn update?": "GRN Update helps log the receipt of goods in the system after delivery.",
+  "what is grn update?": "GRN Update helps log the receipt of goods in the system after delivery.",
+
+  "How do I create a voucher?": "Navigate to 'Vouchers', click 'Create', and fill in the transaction details.",
+  "how do i create a voucher?": "Navigate to 'Vouchers', click 'Create', and fill in the transaction details.",
+
+  "Where can I see total receivables?": "The total receivables are shown on the main dashboard card.",
+  "where can i see total receivables?": "The total receivables are shown on the main dashboard card.",
+
+  "What is the use of route card?": "The route card helps track and manage delivery routes for shipments.",
+  "what is the use of route card?": "The route card helps track and manage delivery routes for shipments.",
+
+  "How can I return a load?": "Use the 'Return' tab to select and process the load return entry.",
+  "how can i return a load?": "Use the 'Return' tab to select and process the load return entry.",
+
+  "Can I generate reports by vendor?": "Yes, go to 'Reports', apply vendor filters, and generate the report.",
+  "can I generate reports by vendor?": "Yes, go to 'Reports', apply vendor filters, and generate the report."
+
+
+};
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const chatbotBody = document.getElementById('chatbotBody');
+            const message = input.value.trim();
+
+            if (message) {
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message user-message';
+                userMessage.textContent = message;
+                chatbotBody.appendChild(userMessage);
+
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'message bot-message';
+                loadingMessage.textContent = 'Thinking...';
+                chatbotBody.appendChild(loadingMessage);
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+
+                if (predefinedResponses[message]) {
+                    chatbotBody.removeChild(loadingMessage);
+                    const botMessage = document.createElement('div');
+                    botMessage.className = 'message bot-message';
+                    botMessage.textContent = predefinedResponses[message];
+                    chatbotBody.appendChild(botMessage);
+                } else {
+                    try {
+                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer YOUR_API_KEY'
+                            },
+                            body: JSON.stringify({
+                                model: 'gpt-3.5-turbo',
+                                messages: [
+                                    { role: 'system', content: 'You are TMT Assistant...' },
+                                    { role: 'user', content: message }
+                                ]
+                            })
+                        });
+                        const data = await response.json();
+                        chatbotBody.removeChild(loadingMessage);
+                        const botMessage = document.createElement('div');
+                        botMessage.className = 'message bot-message';
+                        botMessage.textContent = data.choices[0].message.content;
+                        chatbotBody.appendChild(botMessage);
+                    } catch (err) {
+                        chatbotBody.removeChild(loadingMessage);
+                        chatbotBody.innerHTML += `<div class="message bot-message">Sorry, something went wrong.</div>`;
+                    }
+                }
+
+                input.value = '';
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+            }
+        }
+
+        document.getElementById('chatbotInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Dropdown Logic
+        document.addEventListener("DOMContentLoaded", function () {
+    const avatarBtn = document.getElementById("avatarBtn");
+    const dropdown = document.getElementById("dropdownMenu");
+
+    avatarBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        dropdown.classList.toggle("show");
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!dropdown.contains(event.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+});
+
+    </script>
+</body>
+</html>
